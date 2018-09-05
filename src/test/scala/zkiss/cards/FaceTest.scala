@@ -12,4 +12,9 @@ class FaceTest extends FunSuite with Matchers {
     Face.Nine > Face.K should be (false)
   }
 
+  test("shortName") {
+    Face.shortName(Face.A) should be ("A")
+    Face.shortName(Face.Ten) should be ("10")
+  }
+
 }

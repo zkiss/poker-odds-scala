@@ -8,87 +8,74 @@ import scala.collection.immutable.TreeSet
 case class Hand(cards: TreeSet[Card]) extends Ordered[Hand] {
   require(cards.size == 5)
 
-  val value: HandValue = HandValue.of(this)
+  val value: HandValue[_] = HandValue.of(this)
 
   override def compare(that: Hand): Int =
-    this.value.compare(that.value)
+    HandValue.ordering.compare(this.value, that.value)
 }
 
-sealed trait HandValue extends Ordered[HandValue]
+sealed trait HandValue[VV <: HandValue[VV]] extends Ordered[VV]
 
-sealed trait HandValueExtractor[+T] {
+sealed trait HandValueExtractor[+T <: HandValue[_]] {
   def from(hand: Hand): Option[T]
 
-  def isTarget(value: HandValue): Boolean = value.isInstanceOf[T]
+  def isTarget(value: HandValue[_]): Boolean = value.isInstanceOf[T]
 }
 
 object HandValue {
-  private val Values: Array[HandValueExtractor[HandValue]] = Array(
+  private val HighToLow: Array[HandValueExtractor[HandValue[_]]] = Array(
     TwoPairs,
     Pair,
     HighCard
   )
 
-  def of(hand: Hand): HandValue = Values.toStream
+  def of(hand: Hand): HandValue[_] = HighToLow.toStream
     .map(e => e.from(hand))
     .dropWhile(o => o.isEmpty)
     .map(o => o.get)
     .head
 
-  val byType: Ordering[HandValue] =
-    Ordering.by(hv => Values.indexWhere(e => e.isTarget(hv)))
+  val ordering: Ordering[HandValue[_]] =
+    Ordering.by((hv: HandValue[_]) => HighToLow.indexWhere(e => e.isTarget(hv)))
 
 }
 
-case class HighCard(card: Card) extends HandValue {
-  override def compare(that: HandValue): Int =
-    HandValue.byType.thenComparing(HighCard.ordering)
+case class HighCard(card: Card) extends HandValue[HighCard] {
+  override def compare(that: HighCard): Int =
+    this.card.face.compare(that.card.face)
 }
 
 object HighCard extends HandValueExtractor[HighCard] {
-  private val ordering =
-    Ordering.by((hc:HighCard)=>hc.card.face)
-  private val comparator =
-    HandValue.byType
-      .thenComparing((hv: HandValue) => hv.asInstanceOf[HighCard].card.face)
-
   def from(hand: Hand): Option[HighCard] = Some(HighCard(hand.cards.last))
 }
 
-case class Pair(pair: Set[Card]) extends HandValue {
+case class Pair(pair: Set[Card]) extends HandValue[Pair] {
   require(pair.size == 2)
   require(pair.groupBy(c => c.face).size == 1)
 
   val face: Face = pair.head.face
 
-  override def compare(that: HandValue): Int =
-    Pair.comparator.compare(this, that)
+  override def compare(that: Pair): Int =
+    this.face.compare(that.face)
 
 }
 
 object Pair extends HandValueExtractor[Pair] {
-  private val comparator =
-    HandValue.byType
-      .thenComparing((hv: HandValue) => hv.asInstanceOf[Pair].face)
-
   override def from(hand: Hand): Option[Pair] =
     hand.cards.groupBy(c => c.face)
       .find(e => e._2.size == 2)
       .map(e => Pair(e._2))
 }
 
-case class TwoPairs(highPair: Pair, lowPair: Pair) extends HandValue {
+case class TwoPairs(highPair: Pair, lowPair: Pair) extends HandValue[TwoPairs] {
   require(highPair.face > lowPair.face)
 
-  override def compare(that: HandValue): Int = TwoPairs.comparator.compare(this, that)
+  override def compare(that: TwoPairs): Int =
+    Ordering.by((tp: TwoPairs) => (tp.highPair, tp.lowPair))
+      .compare(this, that)
 }
 
 object TwoPairs extends HandValueExtractor[TwoPairs] {
-  private val comparator =
-    HandValue.byType
-      .thenComparing(hv => hv.asInstanceOf[TwoPairs].highPair)
-      .thenComparing(hv => hv.asInstanceOf[TwoPairs].lowPair)
-
   override def from(hand: Hand): Option[TwoPairs] = {
     val twoPairs = hand.cards.groupBy(c => c.face)
       .filter(e => e._2.size == 2)
