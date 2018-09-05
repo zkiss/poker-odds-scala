@@ -32,6 +32,18 @@ class HandTest extends FunSuite with Matchers {
     tp.highPair should be(Pair(cards(Face.Three, Face.Three)))
   }
 
+  test("Pair < TwoPairs") {
+    val p = hand(Face.K, Face.Two, Face.Three, Face.Four, Face.K)
+    val tp = hand(Face.Two, Face.Two, Face.Three, Face.Three, Face.A)
+
+    p < tp should be(true)
+  }
+
+  test("isTarget") {
+    Pair.isTarget(Pair(cards(Face.K, Face.K))) should be(true)
+    Pair.isTarget(TwoPairs(Pair(cards(Face.A, Face.A)), Pair(cards(Face.K, Face.K)))) should be(false)
+  }
+
   def hand(faces: Face*): Hand = Hand(
     cards(faces: _*).to[TreeSet]
   )

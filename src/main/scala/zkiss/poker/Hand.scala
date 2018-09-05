@@ -43,7 +43,15 @@ object HandValue {
     .head
 
   val valueOrder: Ordering[HandValue[_]] =
-    Ordering.by((hv: HandValue[_]) => HighToLow.indexWhere(e => e.isTarget(hv)))
+    Ordering.by((hv: HandValue[_]) => idx(hv))
+
+  private def idx(hv: HandValue[_]): Int =
+    HighToLow.indexWhere(e => e.isTarget(hv)) match {
+      case -1 => throw new RuntimeException("not found")
+      case i => i
+    }
+
+
 }
 
 case class HighCard(card: Card) extends HandValue[HighCard] {
