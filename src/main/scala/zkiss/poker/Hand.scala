@@ -2,6 +2,7 @@ package zkiss.poker
 
 import zkiss.cards.Card
 import zkiss.cards.Face.Face
+import zkiss.poker.HandValue.valueOrder
 
 import scala.collection.immutable.TreeSet
 
@@ -11,10 +12,16 @@ case class Hand(cards: TreeSet[Card]) extends Ordered[Hand] {
   val value: HandValue[_] = HandValue.of(this)
 
   override def compare(that: Hand): Int =
-    HandValue.ordering.compare(this.value, that.value)
+    this.value.compareGeneral(that.value)
 }
 
-sealed trait HandValue[VV <: HandValue[VV]] extends Ordered[VV]
+sealed trait HandValue[VV <: HandValue[VV]] extends Ordered[VV] {
+  def compareGeneral(other: HandValue[_]): Int =
+    valueOrder.compare(this, other) match {
+      case 0 => compare(other.asInstanceOf[VV])
+      case r => r
+    }
+}
 
 sealed trait HandValueExtractor[+T <: HandValue[_]] {
   def from(hand: Hand): Option[T]
@@ -35,9 +42,8 @@ object HandValue {
     .map(o => o.get)
     .head
 
-  val ordering: Ordering[HandValue[_]] =
+  val valueOrder: Ordering[HandValue[_]] =
     Ordering.by((hv: HandValue[_]) => HighToLow.indexWhere(e => e.isTarget(hv)))
-
 }
 
 case class HighCard(card: Card) extends HandValue[HighCard] {
