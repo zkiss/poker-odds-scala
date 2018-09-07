@@ -26,9 +26,12 @@ sealed trait HandValue[VV <: HandValue[VV]] extends Ordered[VV] {
 }
 
 sealed trait HandValueExtractor[+T <: HandValue[_]] {
-  private val typeClass = getClass.getGenericInterfaces()(0)
-    .asInstanceOf[ParameterizedType]
-    .getActualTypeArguments()(0)
+  private val typeClass = getClass.getGenericInterfaces
+    .filter(t => t.isInstanceOf[ParameterizedType])
+    .map(t => t.asInstanceOf[ParameterizedType])
+    .find(t => t.getRawType == Class.forName("zkiss.poker.HandValueExtractor"))
+    .get
+    .getActualTypeArguments.head
     .asInstanceOf[Class[_]]
 
   def from(hand: Hand): Option[T]
