@@ -14,15 +14,20 @@ case class Hand(cards: TreeSet[Card]) extends Ordered[Hand] {
   val value: HandValue[_] = HandValue.of(this)
 
   override def compare(that: Hand): Int =
-    this.value.compareGeneral(that.value)
+    this.value.compare(that.value)
 }
 
-sealed trait HandValue[VV <: HandValue[VV]] extends Ordered[VV] {
-  def compareGeneral(other: HandValue[_]): Int =
-    valueOrder.compare(this, other) match {
-      case 0 => compare(other.asInstanceOf[VV])
+sealed trait HandValue[V <: HandValue[V]] extends Ordered[HandValue[_]] {
+  final override def compare(that: HandValue[_]): Int =
+    compareGeneral(that)
+
+  final def compareGeneral(that: HandValue[_]): Int =
+    valueOrder.compare(this, that) match {
+      case 0 => compareValue(that.asInstanceOf[V]) // must be same type
       case r => r
     }
+
+  def compareValue(that: V): Int
 }
 
 sealed trait HandValueExtractor[+T <: HandValue[_]] {
@@ -41,37 +46,38 @@ sealed trait HandValueExtractor[+T <: HandValue[_]] {
 }
 
 object HandValue {
-  private val HighToLow: Array[HandValueExtractor[HandValue[_]]] = Array(
-    TwoPairs,
+  private val strengthOrder: Array[HandValueExtractor[HandValue[_]]] = Array(
+    HighCard,
     Pair,
-    HighCard
+    TwoPairs
   )
 
-  def of(hand: Hand): HandValue[_] = HighToLow.toStream
+  def of(hand: Hand): HandValue[_] = strengthOrder
+    .toStream // stream for lazy eval
+    .reverse
     .map(e => e.from(hand))
     .dropWhile(o => o.isEmpty)
     .map(o => o.get)
     .head
 
   val valueOrder: Ordering[HandValue[_]] =
-    Ordering.by((hv: HandValue[_]) => idx(hv))
+    Ordering.by((hv: HandValue[_]) => strengthIdx(hv))
 
-  private def idx(hv: HandValue[_]): Int =
-    HighToLow.indexWhere(e => e.isTarget(hv)) match {
-      case -1 => throw new RuntimeException("not found")
+  private def strengthIdx(hv: HandValue[_]): Int =
+    strengthOrder.indexWhere(e => e.isTarget(hv)) match {
+      case -1 => throw new RuntimeException(s"HandValue missing from strength order: ${hv.getClass}")
       case i => i
     }
-
-
 }
 
 case class HighCard(card: Card) extends HandValue[HighCard] {
-  override def compare(that: HighCard): Int =
+  override def compareValue(that: HighCard): Int =
     this.card.face.compare(that.card.face)
 }
 
 object HighCard extends HandValueExtractor[HighCard] {
-  def from(hand: Hand): Option[HighCard] = Some(HighCard(hand.cards.last))
+  def from(hand: Hand): Option[HighCard] =
+    Some(HighCard(hand.cards.lastKey))
 }
 
 case class Pair(pair: Set[Card]) extends HandValue[Pair] {
@@ -80,8 +86,8 @@ case class Pair(pair: Set[Card]) extends HandValue[Pair] {
 
   val face: Face = pair.head.face
 
-  override def compare(that: Pair): Int =
-    this.face.compare(that.face)
+  override def compareValue(that: Pair): Int =
+    Pair.ordering.compare(this, that)
 
 }
 
@@ -90,17 +96,21 @@ object Pair extends HandValueExtractor[Pair] {
     hand.cards.groupBy(c => c.face)
       .find(e => e._2.size == 2)
       .map(e => Pair(e._2))
+
+  val ordering: Ordering[Pair] = Ordering.by((p: Pair) => p.face)
 }
 
 case class TwoPairs(highPair: Pair, lowPair: Pair) extends HandValue[TwoPairs] {
   require(highPair.face > lowPair.face)
 
-  override def compare(that: TwoPairs): Int =
-    Ordering.by((tp: TwoPairs) => (tp.highPair, tp.lowPair))
-      .compare(this, that)
+  override def compareValue(that: TwoPairs): Int = {
+    TwoPairs.ordering.compare(this, that)
+  }
 }
 
 object TwoPairs extends HandValueExtractor[TwoPairs] {
+  val ordering: Ordering[TwoPairs] = Ordering.by((tp: TwoPairs) => (tp.highPair, tp.lowPair))(Ordering.Tuple2(Pair.ordering, Pair.ordering))
+
   override def from(hand: Hand): Option[TwoPairs] = {
     val twoPairs = hand.cards.groupBy(c => c.face)
       .filter(e => e._2.size == 2)

@@ -9,16 +9,14 @@ import scala.collection.immutable.TreeSet
 class HandTest extends FunSuite with Matchers {
 
   test("HighCard is found") {
-    val v = hand(Face.Two, Face.Three, Face.Five, Face.Ten, Face.A).value
+    val v = hand(Face.A, Face.Two, Face.Five, Face.Ten, Face.K).value.asInstanceOf[HighCard]
 
-    v.isInstanceOf[HighCard] should be(true)
+    v.card should be(cards(Face.A).head)
   }
 
   test("Pair is found") {
-    val v = hand(Face.Two, Face.Two, Face.Five, Face.Ten, Face.K).value
+    val pair = hand(Face.Two, Face.Two, Face.Five, Face.Ten, Face.K).value.asInstanceOf[Pair]
 
-    v.isInstanceOf[Pair] should be(true)
-    val pair = v.asInstanceOf[Pair]
     pair.face should be(Face.Two)
     pair.pair should be(Set(Card(Suit.Hearts, Face.Two), Card(Suit.Spades, Face.Two)))
   }
