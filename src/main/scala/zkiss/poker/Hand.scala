@@ -1,5 +1,7 @@
 package zkiss.poker
 
+import java.lang.reflect.ParameterizedType
+
 import zkiss.cards.Card
 import zkiss.cards.Face.Face
 import zkiss.poker.HandValue.valueOrder
@@ -24,9 +26,15 @@ sealed trait HandValue[VV <: HandValue[VV]] extends Ordered[VV] {
 }
 
 sealed trait HandValueExtractor[+T <: HandValue[_]] {
+  private val typeClass = getClass.getGenericInterfaces()(0)
+    .asInstanceOf[ParameterizedType]
+    .getActualTypeArguments()(0)
+    .asInstanceOf[Class[_]]
+
   def from(hand: Hand): Option[T]
 
-  def isTarget(value: HandValue[_]): Boolean = value.isInstanceOf[T]
+  def isTarget(value: HandValue[_]): Boolean =
+    typeClass.isAssignableFrom(value.getClass)
 }
 
 object HandValue {
