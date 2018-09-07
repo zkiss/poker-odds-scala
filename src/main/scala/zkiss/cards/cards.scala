@@ -33,7 +33,7 @@ object Face extends Enumeration {
   }
 }
 
-case class Card(suit: Suit, face: Face) extends Ordered[Card] {
+case class Card(face: Face, suit: Suit) extends Ordered[Card] {
   override def compare(that: Card): Int =
     Ordering.by((c: Card) => (c.face, c.suit))
       .compare(this, that)

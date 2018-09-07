@@ -2,8 +2,9 @@ package zkiss.poker
 
 import java.lang.reflect.ParameterizedType
 
-import zkiss.cards.Card
 import zkiss.cards.Face.Face
+import zkiss.cards.Suit.Suit
+import zkiss.cards.{Card, Face}
 import zkiss.poker.HandValue.valueOrder
 
 import scala.collection.immutable.TreeSet
@@ -50,7 +51,9 @@ object HandValue {
     HighCard,
     Pair,
     TwoPairs,
-    ThreeOfAKind
+    ThreeOfAKind,
+    Straight,
+    Flush
   )
 
   def of(hand: Hand): HandValue[_] = strengthOrder
@@ -145,4 +148,59 @@ object ThreeOfAKind extends HandValueExtractor[ThreeOfAKind] {
       .values
       .find(f => f.size == 3)
       .map(f => ThreeOfAKind(f))
+}
+
+case class Straight(cards: TreeSet[Card]) extends HandValue[Straight] {
+  require(Straight.isStraight(cards))
+
+  val end: Card = {
+    if (contiguous) cards.lastKey
+    else cards.dropRight(1).last
+  }
+
+  private def contiguous: Boolean =
+    cards.firstKey.face.id + 5 == cards.lastKey.face.id
+
+  override def compareValue(that: Straight): Int =
+    Straight.ordering.compare(this, that)
+}
+
+object Straight extends HandValueExtractor[Straight] {
+  val ordering: Ordering[Straight] = Ordering.by(s => s.end)
+
+  override def from(hand: Hand): Option[Straight] =
+    if (isStraight(hand.cards)) Some(Straight(hand.cards))
+    else None
+
+  private val lowAceStraightCards = Face.Two :: Face.Three :: Face.Four :: Face.Five :: Face.A :: Nil
+
+  private def isStraight(cards: TreeSet[Card]): Boolean = {
+    def contiguous = cards.firstKey.face.id + 5 == cards.lastKey.face.id
+
+    def lowAce = cards.toList.map(c => c.face) == lowAceStraightCards
+
+    cards.groupBy(c => c.face).size == 5 && (contiguous || lowAce)
+  }
+}
+
+case class Flush(cards: TreeSet[Card]) extends HandValue[Flush] {
+  require(cards.size == 5)
+  require(cards.groupBy(c => c.suit).size == 1)
+
+  val suit: Suit = cards.head.suit
+  val faces: List[Face] = cards.map(c => c.face).toList
+
+  override def compareValue(that: Flush): Int =
+    faces.zip(that.faces)
+      .reverse
+      .dropWhile(p => p._1 == p._2)
+      .headOption
+      .map(p => p._1.compare(p._2))
+      .getOrElse(0)
+}
+
+object Flush extends HandValueExtractor[Flush] {
+  override def from(hand: Hand): Option[Flush] =
+    if (hand.cards.groupBy(c => c.suit).size == 1) Some(Flush(hand.cards))
+    else None
 }

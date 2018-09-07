@@ -2,6 +2,7 @@ package zkiss.poker
 
 import org.scalatest.{FunSuite, Matchers}
 import zkiss.cards.Face.Face
+import zkiss.cards.Suit.Suit
 import zkiss.cards.{Card, Face, Suit}
 
 import scala.collection.immutable.TreeSet
@@ -9,16 +10,22 @@ import scala.collection.immutable.TreeSet
 class HandTest extends FunSuite with Matchers {
 
   test("HighCard is found") {
-    val v = hand(Face.A, Face.Two, Face.Five, Face.Ten, Face.K).value.asInstanceOf[HighCard]
+    val v = hand(
+      (Face.A, Suit.Spades),
+      (Face.Two, Suit.Hearts),
+      (Face.Five, Suit.Spades),
+      (Face.Ten, Suit.Spades),
+      (Face.K, Suit.Spades)
+    ).value.asInstanceOf[HighCard]
 
-    v.card should be(cards(Face.A).head)
+    v.card should be(Card(Face.A, Suit.Spades))
   }
 
   test("Pair is found") {
     val pair = hand(Face.Two, Face.Two, Face.Five, Face.Ten, Face.K).value.asInstanceOf[Pair]
 
     pair.face should be(Face.Two)
-    pair.pair should be(Set(Card(Suit.Hearts, Face.Two), Card(Suit.Spades, Face.Two)))
+    pair.pair should be(Set(Card(Face.Two, Suit.Hearts), Card(Face.Two, Suit.Spades)))
   }
 
   test("TwoPairs is found") {
@@ -36,8 +43,8 @@ class HandTest extends FunSuite with Matchers {
 
     p < tp should be(true)
     p.value < tp.value should be(true)
-    val pv = p.value.asInstanceOf[Pair]
-    val tpv = tp.value.asInstanceOf[TwoPairs]
+    val pv: Pair = p.value.asInstanceOf[Pair]
+    val tpv: TwoPairs = tp.value.asInstanceOf[TwoPairs]
     pv < tpv should be(true)
   }
 
@@ -50,12 +57,21 @@ class HandTest extends FunSuite with Matchers {
     TwoPairs.isTarget(pairsAK) should be(true)
   }
 
-  def hand(faces: Face*): Hand = Hand(
-    cards(faces: _*).to[TreeSet]
-  )
+  def hand(faces: Face*): Hand =
+    Hand(
+      cards(faces: _*).to[TreeSet]
+    )
 
-  def cards(faces: Face*): Set[Card] = faces
-    .groupBy(f => f)
-    .flatMap(e => e._2.indices.map(i => Card(Suit(i), e._1)))
-    .toSet
+  def hand(c1: (Face, Suit), c2: (Face, Suit), c3: (Face, Suit), c4: (Face, Suit), c5: (Face, Suit)) =
+    Hand(
+      (c1 :: c2 :: c3 :: c4 :: c5 :: Nil)
+        .map(p => Card(p._1, p._2))
+        .to[TreeSet]
+    )
+
+  def cards(faces: Face*): Set[Card] =
+    faces
+      .groupBy(f => f)
+      .flatMap(e => e._2.indices.map(i => Card(e._1, Suit(i))))
+      .toSet
 }
