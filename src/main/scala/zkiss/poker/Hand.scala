@@ -49,7 +49,8 @@ object HandValue {
   private val strengthOrder: Array[HandValueExtractor[HandValue[_]]] = Array(
     HighCard,
     Pair,
-    TwoPairs
+    TwoPairs,
+    ThreeOfAKind
   )
 
   def of(hand: Hand): HandValue[_] = strengthOrder
@@ -88,7 +89,6 @@ case class Pair(pair: Set[Card]) extends HandValue[Pair] {
 
   override def compareValue(that: Pair): Int =
     Pair.ordering.compare(this, that)
-
 }
 
 object Pair extends HandValueExtractor[Pair] {
@@ -109,6 +109,7 @@ case class TwoPairs(highPair: Pair, lowPair: Pair) extends HandValue[TwoPairs] {
 }
 
 object TwoPairs extends HandValueExtractor[TwoPairs] {
+  // would be nice if the implicit ordering worked...
   val ordering: Ordering[TwoPairs] = Ordering.by((tp: TwoPairs) => (tp.highPair, tp.lowPair))(Ordering.Tuple2(Pair.ordering, Pair.ordering))
 
   override def from(hand: Hand): Option[TwoPairs] = {
@@ -124,4 +125,24 @@ object TwoPairs extends HandValueExtractor[TwoPairs] {
       case _ => None
     }
   }
+}
+
+case class ThreeOfAKind(cards: Set[Card]) extends HandValue[ThreeOfAKind] {
+  require(cards.size == 3)
+  require(cards.groupBy(c => c.face).size == 1)
+
+  val face: Face = cards.head.face
+
+  override def compareValue(that: ThreeOfAKind): Int =
+    ThreeOfAKind.ordering.compare(this, that)
+}
+
+object ThreeOfAKind extends HandValueExtractor[ThreeOfAKind] {
+  val ordering: Ordering[ThreeOfAKind] = Ordering.by(t => t.face)
+
+  override def from(hand: Hand): Option[ThreeOfAKind] =
+    hand.cards.groupBy(c => c.face)
+      .values
+      .find(f => f.size == 3)
+      .map(f => ThreeOfAKind(f))
 }

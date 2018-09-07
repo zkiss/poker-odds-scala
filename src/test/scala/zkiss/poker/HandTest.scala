@@ -35,6 +35,10 @@ class HandTest extends FunSuite with Matchers {
     val tp = hand(Face.Two, Face.Two, Face.Three, Face.Three, Face.A)
 
     p < tp should be(true)
+    p.value < tp.value should be(true)
+    val pv = p.value.asInstanceOf[Pair]
+    val tpv = tp.value.asInstanceOf[TwoPairs]
+    pv < tpv should be(true)
   }
 
   test("isTarget") {
