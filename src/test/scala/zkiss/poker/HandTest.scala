@@ -5,6 +5,7 @@ import zkiss.cards.Face.Face
 import zkiss.cards.Suit.Suit
 import zkiss.cards.{Card, Face, Suit}
 
+import scala.collection.SortedSet
 import scala.collection.immutable.TreeSet
 
 class HandTest extends FunSuite with Matchers {
@@ -48,6 +49,16 @@ class HandTest extends FunSuite with Matchers {
     pv < tpv should be(true)
   }
 
+  test("Flush < Flush") {
+    val low = Flush(cards(Face.Two, Face.Three, Face.Five, Face.Six, Face.Seven))
+    val mid = Flush(cards(Face.Two, Face.Four, Face.Five, Face.Six, Face.Seven))
+    val high = Flush(cards(Face.Two, Face.Three, Face.Five, Face.Six, Face.K))
+
+    low < mid should be(true)
+    mid < high should be(true)
+    low < high should be(true)
+  }
+
   test("isTarget") {
     val pairK = Pair(cards(Face.K, Face.K))
     val pairsAK = TwoPairs(Pair(cards(Face.A, Face.A)), pairK)
@@ -69,9 +80,9 @@ class HandTest extends FunSuite with Matchers {
         .to[TreeSet]
     )
 
-  def cards(faces: Face*): Set[Card] =
+  def cards(faces: Face*): SortedSet[Card] =
     faces
       .groupBy(f => f)
       .flatMap(e => e._2.indices.map(i => Card(e._1, Suit(i))))
-      .toSet
+      .to[SortedSet]
 }

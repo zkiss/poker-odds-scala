@@ -7,9 +7,9 @@ import zkiss.cards.Suit.Suit
 import zkiss.cards.{Card, Face}
 import zkiss.poker.HandValue.valueOrder
 
-import scala.collection.immutable.TreeSet
+import scala.collection.SortedSet
 
-case class Hand(cards: TreeSet[Card]) extends Ordered[Hand] {
+case class Hand(cards: SortedSet[Card]) extends Ordered[Hand] {
   require(cards.size == 5)
 
   val value: HandValue[_] = HandValue.of(this)
@@ -84,7 +84,7 @@ object HighCard extends HandValueExtractor[HighCard] {
     Some(HighCard(hand.cards.lastKey))
 }
 
-case class Pair(pair: Set[Card]) extends HandValue[Pair] {
+case class Pair(pair: collection.Set[Card]) extends HandValue[Pair] {
   require(pair.size == 2)
   require(pair.groupBy(c => c.face).size == 1)
 
@@ -130,7 +130,7 @@ object TwoPairs extends HandValueExtractor[TwoPairs] {
   }
 }
 
-case class ThreeOfAKind(cards: Set[Card]) extends HandValue[ThreeOfAKind] {
+case class ThreeOfAKind(cards: collection.Set[Card]) extends HandValue[ThreeOfAKind] {
   require(cards.size == 3)
   require(cards.groupBy(c => c.face).size == 1)
 
@@ -150,7 +150,7 @@ object ThreeOfAKind extends HandValueExtractor[ThreeOfAKind] {
       .map(f => ThreeOfAKind(f))
 }
 
-case class Straight(cards: TreeSet[Card]) extends HandValue[Straight] {
+case class Straight(cards: SortedSet[Card]) extends HandValue[Straight] {
   require(Straight.isStraight(cards))
 
   val end: Card = {
@@ -174,7 +174,7 @@ object Straight extends HandValueExtractor[Straight] {
 
   private val lowAceStraightCards = Face.Two :: Face.Three :: Face.Four :: Face.Five :: Face.A :: Nil
 
-  private def isStraight(cards: TreeSet[Card]): Boolean = {
+  private def isStraight(cards: SortedSet[Card]): Boolean = {
     def contiguous = cards.firstKey.face.id + 5 == cards.lastKey.face.id
 
     def lowAce = cards.toList.map(c => c.face) == lowAceStraightCards
@@ -183,7 +183,7 @@ object Straight extends HandValueExtractor[Straight] {
   }
 }
 
-case class Flush(cards: TreeSet[Card]) extends HandValue[Flush] {
+case class Flush(cards: SortedSet[Card]) extends HandValue[Flush] {
   require(cards.size == 5)
   require(cards.groupBy(c => c.suit).size == 1)
 
