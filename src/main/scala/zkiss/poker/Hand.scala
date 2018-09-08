@@ -121,7 +121,7 @@ object TwoPairs extends HandValueExtractor[TwoPairs] {
       .values
       .toList
       .map(p => Pair(p))
-      .sortBy(p => p.face)
+      .sorted(Pair.ordering)
 
     twoPairs match {
       case low :: high :: Nil => Some(TwoPairs(high, low))
