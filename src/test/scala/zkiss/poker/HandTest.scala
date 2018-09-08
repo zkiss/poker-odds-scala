@@ -90,6 +90,12 @@ class HandTest extends FunSuite with Matchers {
     low < high should be(true)
   }
 
+  test("StraightFlush") {
+    val sf = hand(Face.Nine, Face.Ten, Face.J, Face.Q, Face.K).value.asInstanceOf[StraightFlush]
+
+    sf.straight.end should be(Face.K)
+  }
+
   test("RoyalFlush") {
     val rf = hand(Face.Ten, Face.J, Face.Q, Face.K, Face.A).value.asInstanceOf[RoyalFlush]
 
