@@ -169,7 +169,7 @@ object Straight extends HandValueExtractor[Straight] {
     if (isStraight(hand.cards)) Some(Straight(hand.cards))
     else None
 
-  private val lowAceStraightCards = Face.Two :: Face.Three :: Face.Four :: Face.Five :: Face.A :: Nil
+  private val lowAceStraightCards = List(Face.Two, Face.Three, Face.Four, Face.Five, Face.A)
 
   private def contiguous(cards: SortedSet[Card]) =
     cards.firstKey.face.id + 4 == cards.lastKey.face.id
