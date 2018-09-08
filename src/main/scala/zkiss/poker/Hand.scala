@@ -204,3 +204,19 @@ object Flush extends HandValueExtractor[Flush] {
     if (hand.cards.groupBy(c => c.suit).size == 1) Some(Flush(hand.cards))
     else None
 }
+
+case class FullHouse(three: ThreeOfAKind, pair: Pair) extends HandValue[FullHouse] {
+  require(three.cards.intersect(pair.pair).isEmpty)
+
+  override def compareValue(that: FullHouse): Int =
+    FullHouse.order.compare(this, that)
+}
+
+object FullHouse extends HandValueExtractor[FullHouse] {
+  val order: Ordering[FullHouse] = Ordering.by((fh: FullHouse) => (fh.three, fh.pair))(Ordering.Tuple2(ThreeOfAKind.ordering, Pair.ordering))
+
+  override def from(hand: Hand): Option[FullHouse] = for {
+    three <- ThreeOfAKind.from(hand)
+    pair <- Pair.from(hand)
+  } yield FullHouse(three, pair)
+}
