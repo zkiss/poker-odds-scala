@@ -104,7 +104,7 @@ object Pair extends HandValueExtractor[Pair] {
 }
 
 case class TwoPairs(highPair: Pair, lowPair: Pair) extends HandValue[TwoPairs] {
-  require(highPair.face > lowPair.face)
+  require(highPair > lowPair)
 
   override def compareValue(that: TwoPairs): Int = {
     TwoPairs.ordering.compare(this, that)
@@ -154,12 +154,9 @@ case class Straight(cards: SortedSet[Card]) extends HandValue[Straight] {
   require(Straight.isStraight(cards))
 
   val end: Card = {
-    if (contiguous) cards.lastKey
+    if (Straight.contiguous(cards)) cards.lastKey
     else cards.dropRight(1).last
   }
-
-  private def contiguous: Boolean =
-    cards.firstKey.face.id + 5 == cards.lastKey.face.id
 
   override def compareValue(that: Straight): Int =
     Straight.ordering.compare(this, that)
@@ -174,12 +171,13 @@ object Straight extends HandValueExtractor[Straight] {
 
   private val lowAceStraightCards = Face.Two :: Face.Three :: Face.Four :: Face.Five :: Face.A :: Nil
 
-  private def isStraight(cards: SortedSet[Card]): Boolean = {
-    def contiguous = cards.firstKey.face.id + 5 == cards.lastKey.face.id
+  private def contiguous(cards: SortedSet[Card]) =
+    cards.firstKey.face.id + 4 == cards.lastKey.face.id
 
+  private def isStraight(cards: SortedSet[Card]) = {
     def lowAce = cards.toList.map(c => c.face) == lowAceStraightCards
 
-    cards.groupBy(c => c.face).size == 5 && (contiguous || lowAce)
+    cards.groupBy(c => c.face).size == 5 && (contiguous(cards) || lowAce)
   }
 }
 

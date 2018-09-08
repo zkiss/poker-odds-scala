@@ -49,6 +49,37 @@ class HandTest extends FunSuite with Matchers {
     pv < tpv should be(true)
   }
 
+  test("Straight") {
+    val low = hand(
+      (Face.A, Suit.Spades),
+      (Face.Two, Suit.Hearts),
+      (Face.Three, Suit.Diamonds),
+      (Face.Four, Suit.Spades),
+      (Face.Five, Suit.Diamonds)
+    ).value.asInstanceOf[Straight]
+    val mid = hand(
+      (Face.Seven, Suit.Spades),
+      (Face.Eight, Suit.Hearts),
+      (Face.Nine, Suit.Diamonds),
+      (Face.Ten, Suit.Spades),
+      (Face.J, Suit.Spades)
+    ).value.asInstanceOf[Straight]
+    val high = hand(
+      (Face.Ten, Suit.Spades),
+      (Face.J, Suit.Hearts),
+      (Face.Q, Suit.Diamonds),
+      (Face.K, Suit.Spades),
+      (Face.A, Suit.Hearts)
+    ).value.asInstanceOf[Straight]
+
+    low.end should be(Card(Face.Five, Suit.Diamonds))
+    mid.end should be(Card(Face.J, Suit.Spades))
+    high.end should be(Card(Face.A, Suit.Hearts))
+    low < mid should be(true)
+    mid < high should be(true)
+    low < high should be(true)
+  }
+
   test("Flush < Flush") {
     val low = Flush(cards(Face.Two, Face.Three, Face.Five, Face.Six, Face.Seven))
     val mid = Flush(cards(Face.Two, Face.Four, Face.Five, Face.Six, Face.Seven))
