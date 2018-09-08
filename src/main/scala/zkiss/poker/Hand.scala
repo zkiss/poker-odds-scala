@@ -53,7 +53,11 @@ object HandValue {
     TwoPairs,
     ThreeOfAKind,
     Straight,
-    Flush
+    Flush,
+    FullHouse,
+    FourOfAKind,
+    StraightFlush,
+    RoyalFlush
   )
 
   def of(hand: Hand): HandValue[_] = strengthOrder
@@ -153,10 +157,10 @@ object ThreeOfAKind extends HandValueExtractor[ThreeOfAKind] {
 case class Straight(cards: SortedSet[Card]) extends HandValue[Straight] {
   require(Straight.isStraight(cards))
 
-  val end: Card = {
-    if (Straight.contiguous(cards)) cards.lastKey
-    else cards.dropRight(1).last
-  }
+  val end: Face = {
+    if (Straight.contiguous(cards)) cards
+    else cards.dropRight(1)
+  }.lastKey.face
 
   override def compareValue(that: Straight): Int =
     Straight.ordering.compare(this, that)
@@ -217,4 +221,49 @@ object FullHouse extends HandValueExtractor[FullHouse] {
     three <- ThreeOfAKind.from(hand)
     pair <- Pair.from(hand)
   } yield FullHouse(three, pair)
+}
+
+case class FourOfAKind(cards: collection.Set[Card]) extends HandValue[FourOfAKind] {
+  require(cards.size == 4)
+  require(cards.groupBy(c => c.face).size == 1)
+
+  val face: Face.Face = cards.head.face
+
+  override def compareValue(that: FourOfAKind): Int =
+    this.face.compare(that.face)
+}
+
+object FourOfAKind extends HandValueExtractor[FourOfAKind] {
+  override def from(hand: Hand): Option[FourOfAKind] =
+    hand.cards
+      .groupBy(c => c.face)
+      .values
+      .find(c => c.size == 4)
+      .map(c => FourOfAKind(c))
+}
+
+case class StraightFlush(straight: Straight, flush: Flush) extends HandValue[StraightFlush] {
+  override def compareValue(that: StraightFlush): Int =
+    this.straight.compare(that.straight)
+}
+
+object StraightFlush extends HandValueExtractor[StraightFlush] {
+  override def from(hand: Hand): Option[StraightFlush] = for {
+    straight <- Straight.from(hand)
+    flush <- Flush.from(hand)
+  } yield StraightFlush(straight, flush)
+}
+
+case class RoyalFlush(straightFlush: StraightFlush) extends HandValue[RoyalFlush] {
+  require(straightFlush.straight.end == Face.A)
+
+  override def compareValue(that: RoyalFlush): Int =
+    this.straightFlush.compare(that.straightFlush) // no real point
+}
+
+object RoyalFlush extends HandValueExtractor[RoyalFlush] {
+  override def from(hand: Hand): Option[RoyalFlush] =
+    StraightFlush.from(hand)
+      .filter(sf => sf.straight.end == Face.A)
+      .map(sf => RoyalFlush(sf))
 }

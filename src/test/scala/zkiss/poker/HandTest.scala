@@ -72,22 +72,28 @@ class HandTest extends FunSuite with Matchers {
       (Face.A, Suit.Hearts)
     ).value.asInstanceOf[Straight]
 
-    low.end should be(Card(Face.Five, Suit.Diamonds))
-    mid.end should be(Card(Face.J, Suit.Spades))
-    high.end should be(Card(Face.A, Suit.Hearts))
+    low.end should be(Face.Five)
+    mid.end should be(Face.J)
+    high.end should be(Face.A)
     low < mid should be(true)
     mid < high should be(true)
     low < high should be(true)
   }
 
   test("Flush < Flush") {
-    val low = Flush(cards(Face.Two, Face.Three, Face.Five, Face.Six, Face.Seven))
-    val mid = Flush(cards(Face.Two, Face.Four, Face.Five, Face.Six, Face.Seven))
-    val high = Flush(cards(Face.Two, Face.Three, Face.Five, Face.Six, Face.K))
+    val low = hand(Face.Two, Face.Three, Face.Five, Face.Six, Face.Seven).value.asInstanceOf[Flush]
+    val mid = hand(Face.Two, Face.Four, Face.Five, Face.Six, Face.Seven).value.asInstanceOf[Flush]
+    val high = hand(Face.Two, Face.Three, Face.Five, Face.Six, Face.K).value.asInstanceOf[Flush]
 
     low < mid should be(true)
     mid < high should be(true)
     low < high should be(true)
+  }
+
+  test("RoyalFlush") {
+    val rf = hand(Face.Ten, Face.J, Face.Q, Face.K, Face.A).value.asInstanceOf[RoyalFlush]
+
+    rf.straightFlush.straight.end should be(Face.A)
   }
 
   test("isTarget") {
