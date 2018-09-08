@@ -88,11 +88,11 @@ object HighCard extends HandValueExtractor[HighCard] {
     Some(HighCard(hand.cards.lastKey))
 }
 
-case class Pair(pair: collection.Set[Card]) extends HandValue[Pair] {
-  require(pair.size == 2)
-  require(pair.groupBy(c => c.face).size == 1)
+case class Pair(cards: collection.Set[Card]) extends HandValue[Pair] {
+  require(cards.size == 2)
+  require(cards.groupBy(c => c.face).size == 1)
 
-  val face: Face = pair.head.face
+  val face: Face = cards.head.face
 
   override def compareValue(that: Pair): Int =
     Pair.ordering.compare(this, that)
@@ -208,7 +208,7 @@ object Flush extends HandValueExtractor[Flush] {
 }
 
 case class FullHouse(three: ThreeOfAKind, pair: Pair) extends HandValue[FullHouse] {
-  require(three.cards.intersect(pair.pair).isEmpty)
+  require(three.cards.intersect(pair.cards).isEmpty)
 
   override def compareValue(that: FullHouse): Int =
     FullHouse.order.compare(this, that)

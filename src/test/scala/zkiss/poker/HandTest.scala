@@ -26,14 +26,12 @@ class HandTest extends FunSuite with Matchers {
     val pair = hand(Face.Two, Face.Two, Face.Five, Face.Ten, Face.K).value.asInstanceOf[Pair]
 
     pair.face should be(Face.Two)
-    pair.pair should be(Set(Card(Face.Two, Suit.Hearts), Card(Face.Two, Suit.Spades)))
+    pair.cards should be(Set(Card(Face.Two, Suit.Hearts), Card(Face.Two, Suit.Spades)))
   }
 
   test("TwoPairs is found") {
-    val v = hand(Face.Two, Face.Two, Face.Three, Face.Three, Face.K).value
+    val tp = hand(Face.Two, Face.Two, Face.Three, Face.Three, Face.K).value.asInstanceOf[TwoPairs]
 
-    v.isInstanceOf[TwoPairs] should be(true)
-    val tp = v.asInstanceOf[TwoPairs]
     tp.lowPair should be(Pair(cards(Face.Two, Face.Two)))
     tp.highPair should be(Pair(cards(Face.Three, Face.Three)))
   }
@@ -103,12 +101,12 @@ class HandTest extends FunSuite with Matchers {
   }
 
   test("isTarget") {
-    val pairK = Pair(cards(Face.K, Face.K))
-    val pairsAK = TwoPairs(Pair(cards(Face.A, Face.A)), pairK)
-    Pair.isTarget(pairK) should be(true)
-    Pair.isTarget(pairsAK) should be(false)
-    TwoPairs.isTarget(pairK) should be(false)
-    TwoPairs.isTarget(pairsAK) should be(true)
+    val kk = Pair(cards(Face.K, Face.K))
+    val kkaa = TwoPairs(Pair(cards(Face.A, Face.A)), kk)
+    Pair.isTarget(kk) should be(true)
+    Pair.isTarget(kkaa) should be(false)
+    TwoPairs.isTarget(kk) should be(false)
+    TwoPairs.isTarget(kkaa) should be(true)
   }
 
   def hand(faces: Face*): Hand =
