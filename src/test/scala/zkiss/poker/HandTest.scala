@@ -94,12 +94,6 @@ class HandTest extends FunSuite with Matchers {
     sf.straight.end should be(Face.K)
   }
 
-  test("RoyalFlush") {
-    val rf = hand(Face.Ten, Face.J, Face.Q, Face.K, Face.A).value.asInstanceOf[RoyalFlush]
-
-    rf.straightFlush.straight.end should be(Face.A)
-  }
-
   test("isTarget") {
     val kk = Pair(cards(Face.K, Face.K))
     val kkaa = TwoPairs(Pair(cards(Face.A, Face.A)), kk)
