@@ -56,8 +56,7 @@ object HandValue {
     Flush,
     FullHouse,
     FourOfAKind,
-    StraightFlush,
-    RoyalFlush
+    StraightFlush
   )
 
   def of(hand: Hand): HandValue[_] = strengthOrder
@@ -252,18 +251,4 @@ object StraightFlush extends HandValueExtractor[StraightFlush] {
     straight <- Straight.from(hand)
     flush <- Flush.from(hand)
   } yield StraightFlush(straight, flush)
-}
-
-case class RoyalFlush(straightFlush: StraightFlush) extends HandValue[RoyalFlush] {
-  require(straightFlush.straight.end == Face.A)
-
-  override def compareValue(that: RoyalFlush): Int =
-    this.straightFlush.compare(that.straightFlush) // no real point
-}
-
-object RoyalFlush extends HandValueExtractor[RoyalFlush] {
-  override def from(hand: Hand): Option[RoyalFlush] =
-    StraightFlush.from(hand)
-      .filter(sf => sf.straight.end == Face.A)
-      .map(sf => RoyalFlush(sf))
 }
