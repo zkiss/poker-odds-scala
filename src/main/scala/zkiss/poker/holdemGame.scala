@@ -37,16 +37,10 @@ class HoldemGame(
   def finish(): HoldemGameResult = {
     val allDealt =
       dealt ++
-        (0 to (5 - dealt.size))
+        (0 until (5 - dealt.size))
           .map(_ => deck.take())
 
     HoldemGameResult(players, allDealt)
-  }
-
-  private def bestHand(cards: Set[Card]) = {
-    cards.subsets(5)
-      .map(s => Hand(s.to[SortedSet]))
-      .max
   }
 }
 

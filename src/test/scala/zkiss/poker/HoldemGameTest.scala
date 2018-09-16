@@ -22,4 +22,13 @@ class HoldemGameTest extends FunSuite with Matchers with MockitoSugar {
     winners.head._1 == fives should be(true)
   }
 
+  test("can play game") {
+    val result = HoldemGame.start(
+      Set(Card(Face.A, Suit.Diamonds), Card(Face.A, Suit.Spades)),
+      4
+    ).finish()
+
+    result.winners should not be empty
+  }
+
 }
