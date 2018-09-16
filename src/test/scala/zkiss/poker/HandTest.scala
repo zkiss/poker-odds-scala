@@ -29,6 +29,14 @@ class HandTest extends FunSuite with Matchers {
     pair.cards should be(Set(Card(Face.Two, Suit.Hearts), Card(Face.Two, Suit.Spades)))
   }
 
+  test("HandValue sameAs") {
+    val aa1 = Pair(Set(Card(Face.A, Suit.Hearts), Card(Face.A, Suit.Diamonds)))
+    val aa2 = Pair(Set(Card(Face.A, Suit.Spades), Card(Face.A, Suit.Clubs)))
+
+    aa1.sameAs(aa2) should be(true)
+    aa1.sameAs(Pair(cards(Face.Two, Face.Two))) should be(false)
+  }
+
   test("TwoPairs is found") {
     val tp = hand(Face.Two, Face.Two, Face.Three, Face.Three, Face.K).value.asInstanceOf[TwoPairs]
 
@@ -110,7 +118,7 @@ class HandTest extends FunSuite with Matchers {
 
   def hand(c1: (Face, Suit), c2: (Face, Suit), c3: (Face, Suit), c4: (Face, Suit), c5: (Face, Suit)) =
     Hand(
-      (c1 :: c2 :: c3 :: c4 :: c5 :: Nil)
+      List(c1, c2, c3, c4, c5)
         .map(p => Card(p._1, p._2))
         .to[TreeSet]
     )

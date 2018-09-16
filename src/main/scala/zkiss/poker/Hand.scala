@@ -16,11 +16,17 @@ case class Hand(cards: SortedSet[Card]) extends Ordered[Hand] {
 
   override def compare(that: Hand): Int =
     this.value.compare(that.value)
+
+  def sameAs(that: Hand): Boolean =
+    this.compare(that) == 0
 }
 
 sealed trait HandValue[V <: HandValue[V]] extends Ordered[HandValue[_]] {
   final override def compare(that: HandValue[_]): Int =
     compareGeneral(that)
+
+  def sameAs(that: HandValue[_]): Boolean =
+    this.compare(that) == 0
 
   final def compareGeneral(that: HandValue[_]): Int =
     valueOrder.compare(this, that) match {
