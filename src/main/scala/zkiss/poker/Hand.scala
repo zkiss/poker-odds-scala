@@ -78,7 +78,7 @@ object HandValue {
 
   private def strengthIdx(hv: HandValue[_]): Int =
     strengthOrder.indexWhere(e => e.isTarget(hv)) match {
-      case -1 => throw new RuntimeException(s"HandValue missing from strength order: ${hv.getClass}")
+      case notfound if notfound < 0 => throw new RuntimeException(s"HandValue missing from strength order: ${hv.getClass}")
       case i => i
     }
 }
